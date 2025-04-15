@@ -38,7 +38,7 @@ if manager_name:
             status = st.selectbox(f"סטטוס החשבון בפרויקט '{row['Project']}'?",
                                   ["לא הוגש", "הוגש", "שולם חלקית", "שולם במלואו"],
                                   key=row['Project'])
-            amount = st.number_input(f"סכום חשבון לחודש זה (ש"ח):", min_value=0.0,
+            amount = st.number_input(f'סכום חשבון לחודש זה (ש"ח):', min_value=0.0,
                                      step=1000.0, key=f"amount_{row['Project']}")
             status_entries.append({
                 'Manager': manager_name,
