@@ -16,7 +16,8 @@ def load_projects():
 project_df = load_projects()
 
 # הכנסת שם המנהל
-manager_name = st.text_input("הכנס את שמך (כמו שמופיע ברשימה)")
+manager_list = sorted(project_df['manager'].dropna().unique())
+manager_name = st.selectbox("בחר את שמך מרשימה", manager_list)
 
 # בחירת חודש הדיווח
 report_month = st.date_input("בחר את תאריך הדיווח (לרוב תחילת החודש)", value=datetime.today())
