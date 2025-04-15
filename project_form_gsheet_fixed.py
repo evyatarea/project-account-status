@@ -8,7 +8,8 @@ GOOGLE_SHEET_NAME = "Project Status Form"
 @st.cache_data
 def connect_to_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    with open("credentials.json") as f:
+        service_account_info = json.load(f)
     creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
