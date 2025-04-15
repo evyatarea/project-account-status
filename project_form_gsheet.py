@@ -18,7 +18,7 @@ def connect_to_gsheet():
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
             ]
-   st.write("📦 Loaded secret:", st.secrets["GOOGLE_CREDENTIALS"])
+    st.write("📦 Loaded secret:", st.secrets["GOOGLE_CREDENTIALS"])
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
     return sheet
