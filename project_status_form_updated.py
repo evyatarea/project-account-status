@@ -10,10 +10,7 @@ LOG_FILE = "status_log.xlsx"
 
 @st.cache_data
 def load_projects():
-    return pd.DataFrame({
-        'Manager': ['Alice', 'Alice', 'Bob'],
-        'Project': ['Project A', 'Project B', 'Project C'],
-        'Customer': ['ABC Ltd', 'XYZ Ltd', 'ACME'],
+    return pd.read_excel("projects.xlsx")
     })
 
 project_df = load_projects()
@@ -25,7 +22,7 @@ manager_name = st.text_input("הכנס את שמך (כמו שמופיע ברשי
 report_month = st.date_input("בחר את תאריך הדיווח (לדוגמה תחילת החודש)", value=datetime.today())
 
 if manager_name:
-    relevant_projects = project_df[project_df['Manager'].str.lower() == manager_name.lower()]
+    relevant_projects = project_df[project_df['manager'].str.lower() == manager_name.lower()]
 
     if relevant_projects.empty:
         st.warning("לא נמצאו פרויקטים על שמך. בדוק את האיות ונסה שוב.")
