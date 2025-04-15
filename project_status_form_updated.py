@@ -11,7 +11,7 @@ LOG_FILE = "status_log.xlsx"
 @st.cache_data
 def load_projects():
     return pd.read_excel("projects.xlsx")
-    })
+    
 
 project_df = load_projects()
 
