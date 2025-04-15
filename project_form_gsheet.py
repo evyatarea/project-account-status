@@ -3,6 +3,8 @@ import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import json
+from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="טופס סטטוס פרויקט", layout="centered")
 st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
@@ -14,11 +16,9 @@ CREDENTIALS_FILE = "credentials.json"
 # התחברות ל-Google Sheets
 @st.cache_resource
 def connect_to_gsheet():
-    scope = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-            ]
-    st.write("📦 Loaded secret:", st.secrets["GOOGLE_CREDENTIALS"])
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
     return sheet
