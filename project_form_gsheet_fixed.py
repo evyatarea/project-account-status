@@ -48,7 +48,7 @@ try:
                 status = st.selectbox("סטטוס החשבון", ["", "טרם הוגש", "הוגש", "מאושר"])
 
                 submitted = st.form_submit_button("שלח")
-                st.success("✅ הדיווח נשלח בהצלחה!")
+                
                 if submitted:
                     try:
                         today = date.today().isoformat()
