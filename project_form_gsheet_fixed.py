@@ -1,29 +1,27 @@
 import streamlit as st
 import gspread
-import json
 import pandas as pd
-from datetime import date, datetime
+from datetime import datetime, date
 from google.oauth2.service_account import Credentials
 
-# שם הגיליון ב-Google Sheets
+# קונפיגורציה
 GOOGLE_SHEET_NAME = "Project Status Form"
+GOOGLE_CREDENTIALS_FILE = "streamlit-project-form-240a663d337b.json"
 
-# חיבור ל-Google Sheets דרך קובץ הסודות של Streamlit
+# התחברות ל־Google Sheets
 @st.cache_data
-def connect_to_gsheet():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])  # המרה ממחרוזת ל־dict
-    creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
+def connect_to_sheet():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_file(GOOGLE_CREDENTIALS_FILE, scopes=scope)
     client = gspread.authorize(creds)
-    sheet = client.open(GOOGLE_SHEET_NAME).sheet1
-    return sheet
+    return client.open(GOOGLE_SHEET_NAME).sheet1
 
-# טעינת טבלת הפרויקטים מהאקסל
+# טעינת טבלת פרויקטים
 @st.cache_data
 def load_projects():
     return pd.read_excel("projects.xlsx")
 
-# הגדרות העמוד
+# UI
 st.set_page_config("דיווח סטטוס פרויקט", layout="centered")
 st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
 
