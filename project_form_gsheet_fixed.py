@@ -1,75 +1,39 @@
 import streamlit as st
 import gspread
-import pandas as pd
-from datetime import date, datetime
 from google.oauth2.service_account import Credentials
+from datetime import datetime
 
-# שם הגיליון ב-Google Sheets
+# הגדרת שם הגיליון
 GOOGLE_SHEET_NAME = "Project Status Form"
 
-# חיבור ל-Google Sheets דרך קובץ הסודות של Streamlit
-@st.cache_data
+# התחברות ל-Google Sheets
+@st.cache_resource
 def connect_to_gsheet():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    service_account_info = st.secrets["GOOGLE_CREDENTIALS"]
-    creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
+    scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(st.secrets["GOOGLE_CREDENTIALS"], scopes=scopes)
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
     return sheet
 
-# טעינת טבלת הפרויקטים מהאקסל
-@st.cache_data
-def load_projects():
-    return pd.read_excel("projects.xlsx")
+st.set_page_config(page_title="בדיקת שליחה פשוטה", layout="centered")
+st.title("🚀 טופס בדיקה פשוטה")
 
-# הגדרות העמוד
-st.set_page_config(page_title="סטטוס פרויקט", layout="centered")
-st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
+# כפתור שליחה
+if st.button("שלח שורה לבדיקה"):
+    try:
+        sheet = connect_to_gsheet()
 
-try:
-    sheet = connect_to_gsheet()
-    st.success("✅ החיבור ל-Google Sheets הצליח")
+        now = datetime.now()
+        date_str = now.date().isoformat()
+        time_str = now.strftime("%H:%M:%S")
 
-    # טען את רשימת הפרויקטים
-    project_df = load_projects()
-    manager_list = project_df["manager"].dropna().unique().tolist()
+        # שליחה של שורה קבועה
+        row = [date_str, "בודק", "123", "בדיקת מערכת", "2025-04", "נשלח", 0, "", now.strftime("%Y-%m-%d %H:%M:%S")]
+        sheet.append_row(row)
 
-    selected_manager = st.selectbox("מה שמך?", [""] + manager_list)
+        st.success("✅ השורה נשלחה בהצלחה!")
+        st.write("📝 הנתונים שנשלחו:")
+        st.json(row)
 
-    if selected_manager:
-        manager_projects = project_df[project_df["manager"] == selected_manager]
-
-        for _, row in manager_projects.iterrows():
-            with st.form(key=f"form_{row['project number']}"):
-                st.subheader(f"📝 פרויקט: {row['project name']} ({row['project number']})")
-
-                amount = st.text_input("סכום לחיוב/דיווח החודש (ש״ח):")
-                status = st.selectbox("סטטוס החשבון", ["", "טרם הוגש", "הוגש", "מאושר"])
-
-                submitted = st.form_submit_button("שלח")
-
-                if submitted:
-                    try:
-                        today = date.today().isoformat()
-                        month = today[:7]
-                        last_update = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                        sheet.append_row([
-                            today,
-                            selected_manager,
-                            str(row["project number"]),
-                            row["project name"],
-                            month,
-                            status,
-                            amount,
-                            "",  # File Name
-                            last_update
-                        ])
-
-                        st.success("✅ הדיווח נשלח בהצלחה!")
-
-                    except Exception as e:
-                        st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
-
-except Exception as e:
-    st.error(f"שגיאה בחיבור ל-Google Sheets: {e}")
+    except Exception as e:
+        st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
