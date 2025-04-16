@@ -1,32 +1,28 @@
 import streamlit as st
-import pandas as pd
 import gspread
+import pandas as pd
 from datetime import date, datetime
 from google.oauth2.service_account import Credentials
 
-# קביעת שם הגיליון בגוגל שיטס
+# שם הגיליון בגוגל שיטס
 GOOGLE_SHEET_NAME = "Project Status Form"
 
-# התחברות לגיליון
+# התחברות ל-Google Sheets דרך סיקרטס
 @st.cache_data
 def connect_to_gsheet():
-    scope = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = Credentials.from_service_account_info(
-        st.secrets["GOOGLE_CREDENTIALS"], scopes=scope
-    )
-    client = gspread.authorize(credentials)
-    sheet = client.open(Project Status Form).sheet1
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    service_account_info = st.secrets["GOOGLE_CREDENTIALS"]
+    creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
+    client = gspread.authorize(creds)
+    sheet = client.open(GOOGLE_SHEET_NAME).sheet1
     return sheet
 
-# טעינת טבלת הפרויקטים
+# טעינת טבלת הפרויקטים מהאקסל
 @st.cache_data
 def load_projects():
     return pd.read_excel("projects.xlsx")
 
-# הגדרות עמוד
+# קונפיגורציה
 st.set_page_config(page_title="סטטוס פרויקט", layout="centered")
 st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
 
@@ -36,6 +32,8 @@ try:
 
     project_df = load_projects()
     manager_list = project_df["manager"].dropna().unique().tolist()
+
+    # בחירת מנהל
     selected_manager = st.selectbox("מה שמך?", [""] + manager_list)
 
     if selected_manager:
@@ -44,11 +42,18 @@ try:
         for _, row in manager_projects.iterrows():
             with st.form(key=f"form_{row['project number']}"):
                 st.subheader(f"📝 פרויקט: {row['project name']} ({row['project number']})")
-                amount = st.text_input("סכום לחיוב/דיווח החודש (ש״ח):")
+
+                amount = st.text_input("סכום לחיוב/דיווח החודש (ש״ח):", value="")
                 status = st.selectbox("סטטוס החשבון", ["", "טרם הוגש", "הוגש", "מאושר"])
                 submitted = st.form_submit_button("שלח")
 
                 if submitted:
+                    try:
+                        amount_float = float(amount)
+                    except ValueError:
+                        st.error("❌ נא להזין סכום תקין במספרים")
+                        continue
+
                     today = date.today().isoformat()
                     month = today[:7]
                     last_update = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -60,10 +65,11 @@ try:
                         row["project name"],
                         month,
                         status,
-                        amount,
-                        "",  # File Name
+                        amount_float,
+                        "",  # קובץ (אם יהיה בעתיד)
                         last_update
                     ])
+
                     st.success("✅ הדיווח נשלח בהצלחה!")
 
 except Exception as e:
