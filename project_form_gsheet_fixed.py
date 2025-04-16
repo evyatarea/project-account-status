@@ -3,15 +3,14 @@ import gspread
 import json
 from google.oauth2.service_account import Credentials
 
-# הגדרת שם הגיליון
+# שם הגיליון שאתה עובד איתו
 GOOGLE_SHEET_NAME = "Project Status Form"
 
-# הגדרת החיבור ל-Google Sheets
+# חיבור ל-Google Sheets דרך Streamlit secrets
 @st.cache_data
 def connect_to_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    with open("credentials.json") as f:
-        service_account_info = json.load(f)
+    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
     creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
@@ -21,7 +20,7 @@ def connect_to_gsheet():
 st.set_page_config(page_title="סטטוס פרויקט", layout="centered")
 st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
 
-# ניסיון להתחבר לגוגל שיטס
+# ניסיון חיבור
 try:
     sheet = connect_to_gsheet()
     st.success("החיבור ל-Google Sheets הצליח!")
