@@ -15,10 +15,10 @@ def connect_to_gsheet():
         "https://www.googleapis.com/auth/drive"
     ]
     credentials = Credentials.from_service_account_info(
-        dict(st.secrets["GOOGLE_CREDENTIALS"]), scopes=scope
+        st.secrets["GOOGLE_CREDENTIALS"], scopes=scope
     )
     client = gspread.authorize(credentials)
-    sheet = client.open(GOOGLE_SHEET_NAME).sheet1
+    sheet = client.open(Project Status Form).sheet1
     return sheet
 
 # טעינת טבלת הפרויקטים
