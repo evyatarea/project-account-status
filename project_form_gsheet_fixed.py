@@ -1,41 +1,35 @@
 import streamlit as st
 import gspread
-import json
-from google.oauth2.service_account import Credentials
 from datetime import datetime
+from google.oauth2.service_account import Credentials
 
-# הגדרת שם הגיליון
-GOOGLE_SHEET_NAME = "Project Status Form"
-
-# התחברות ל-Google Sheets
-@st.cache_resource
+# התחברות ל-Google Sheets דרך secrets
 def connect_to_gsheet():
-    scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
-    creds = Credentials.from_service_account_info(st.secrets["GOOGLE_CREDENTIALS"], scopes=scopes)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["GOOGLE_CREDENTIALS"], scopes=scope
+    )
     client = gspread.authorize(creds)
-    sheet = client.open(GOOGLE_SHEET_NAME).sheet1
+    sheet = client.open(st.secrets["GOOGLE_SHEET_NAME"]).sheet1
     return sheet
 
-st.set_page_config(page_title="בדיקת שליחה פשוטה", layout="centered")
-st.title("🚀 טופס בדיקה פשוטה")
+# ממשק
+st.set_page_config(page_title="בדיקת שליחה", layout="centered")
+st.title("📤 טופס בדיקה לשליחה ל-Google Sheets")
 
-# כפתור שליחה
-if st.button("שלח שורה לבדיקה"):
-    try:
-        sheet = connect_to_gsheet()
+try:
+    sheet = connect_to_gsheet()
+    st.success("✅ התחברות הצליחה!")
 
+    if st.button("שלח בדיקה"):
         now = datetime.now()
-        date_str = now.date().isoformat()
-        time_str = now.strftime("%H:%M:%S")
+        sheet.append_row([
+            now.strftime("%Y-%m-%d"),
+            now.strftime("%H:%M:%S"),
+            "Streamlit Test",
+            "בדיקה"
+        ])
+        st.success("✅ הנתונים נשלחו!")
 
-        # שליחה של שורה קבועה
-        row = [date_str, "בודק", "123", "בדיקת מערכת", "2025-04", "נשלח", 0, "", now.strftime("%Y-%m-%d %H:%M:%S")]
-        sheet.append_row(row)
-
-        st.success("✅ השורה נשלחה בהצלחה!")
-        st.write("📝 הנתונים שנשלחו:")
-        st.json(row)
-
-    except Exception as e:
-        st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
+except Exception as e:
+    st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
