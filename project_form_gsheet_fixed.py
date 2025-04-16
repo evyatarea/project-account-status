@@ -1,5 +1,6 @@
 import streamlit as st
 import gspread
+import json
 import pandas as pd
 from datetime import date, datetime
 from google.oauth2.service_account import Credentials
@@ -10,6 +11,7 @@ GOOGLE_SHEET_NAME = "Project Status Form"
 # התחברות ל-Google Sheets דרך secrets
 @st.cache_data
 def connect_to_gsheet():
+    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
