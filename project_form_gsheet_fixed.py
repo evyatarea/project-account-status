@@ -24,44 +24,25 @@ def load_projects():
     return pd.read_excel("projects.xlsx")
 
 # הגדרות העמוד
-st.set_page_config("דיווח סטטוס פרויקט", layout="centered")
-st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
+st.set_page_config(page_title="בדיקת שליחה פשוטה", layout="centered")
+st.title("🚀 טופס בדיקה פשוטה")
 
-try:
-    sheet = connect_to_sheet()
-    project_df = load_projects()
+# כפתור שליחה
+if st.button("שלח שורה לבדיקה"):
+    try:
+        sheet = connect_to_gsheet()
 
-    manager_list = project_df["manager"].dropna().unique().tolist()
-    selected_manager = st.selectbox("מה שמך?", [""] + manager_list)
+        now = datetime.now()
+        date_str = now.date().isoformat()
+        time_str = now.strftime("%H:%M:%S")
 
-    if selected_manager:
-        manager_projects = project_df[project_df["manager"] == selected_manager]
+        # שליחה של שורה קבועה
+        row = [date_str, "בודק", "123", "בדיקת מערכת", "2025-04", "נשלח", 0, "", now.strftime("%Y-%m-%d %H:%M:%S")]
+        sheet.append_row(row)
 
-        for _, row in manager_projects.iterrows():
-            with st.form(key=f"form_{row['project number']}"):
-                st.subheader(f"📝 פרויקט: {row['project name']} ({row['project number']})")
+        st.success("✅ השורה נשלחה בהצלחה!")
+        st.write("📝 הנתונים שנשלחו:")
+        st.json(row)
 
-                amount = st.text_input("סכום לחיוב/דיווח החודש (ש״ח):")
-                status = st.selectbox("סטטוס החשבון", ["", "טרם הוגש", "הוגש", "מאושר"])
-                submitted = st.form_submit_button("שלח")
-
-                if submitted:
-                    today = date.today().isoformat()
-                    month = today[:7]
-                    last_update = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                    sheet.append_row([
-                        today,
-                        selected_manager,
-                        str(row["project number"]),
-                        row["project name"],
-                        month,
-                        status,
-                        amount,
-                        "",
-                        last_update
-                    ])
-                    st.success("✅ הדיווח נשלח בהצלחה!")
-
-except Exception as e:
-    st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
+    except Exception as e:
+        st.error(f"שגיאה בשליחה ל-Google Sheets: {e}")
