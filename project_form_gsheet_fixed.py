@@ -23,6 +23,7 @@ st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
 # ניסיון חיבור
 try:
     sheet = connect_to_gsheet()
-    st.success("החיבור ל-Google Sheets הצליח!")
+    st.success("🔗 החיבור ל-Google Sheets הצליח ✅")
+    st.write("🔍 גיליון נטען:", sheet)
 except Exception as e:
-    st.error(f"שגיאה בחיבור ל-Google Sheets: {e}")
+    st.exception("❌ שגיאה אמיתית בחיבור ל-Google Sheets:")
