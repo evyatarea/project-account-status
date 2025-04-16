@@ -26,4 +26,5 @@ try:
     st.success("🔗 החיבור ל-Google Sheets הצליח ✅")
     st.write("🔍 גיליון נטען:", sheet)
 except Exception as e:
-    st.exception("❌ שגיאה אמיתית בחיבור ל-Google Sheets:")
+    st.error("❌ שגיאה אמיתית בחיבור ל-Google Sheets:")
+    st.exception(e)
