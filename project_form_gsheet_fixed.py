@@ -6,9 +6,8 @@ from google.oauth2.service_account import Credentials
 # התחברות ל-Google Sheets דרך secrets
 def connect_to_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_info(
-        st.secrets["GOOGLE_CREDENTIALS"], scopes=scope
-    )
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    creds = Credentials.from_service_account_info(creds_dict)
     client = gspread.authorize(creds)
     sheet = client.open(st.secrets["GOOGLE_SHEET_NAME"]).sheet1
     return sheet
