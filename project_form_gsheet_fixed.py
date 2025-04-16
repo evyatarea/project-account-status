@@ -44,11 +44,6 @@ try:
             with st.form(key=f"form_{row['project number']}"):
                 st.subheader(f"📝 פרויקט: {row['project name']} ({row['project number']})")
 
-                amount = st.text_input("סכום לחיוב/דיווח החודש (ש״ח):")
-                status = st.selectbox("סטטוס החשבון", ["", "טרם הוגש", "הוגש", "מאושר"])
-                row_to_send = [...]
-                st.write(row_to_send)
-                sheet.append_row(row_to_send)
                 submitted = st.form_submit_button("שלח")
                 
                 if submitted:
