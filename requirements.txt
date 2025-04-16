@@ -1,5 +1,5 @@
 streamlit
-pandas
-openpyxl
 gspread==5.7.2
 google-auth==2.22.0
+pandas
+openpyxl
