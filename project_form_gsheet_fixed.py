@@ -2,17 +2,17 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import json
 
-# התחברות ל-Google Sheets
 @st.cache_resource
 def connect_to_sheet():
-    scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_info(st.secrets["GOOGLE_CREDENTIALS"], scopes=scopes)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])  # ← הפתרון לשגיאה!
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
-    sheet = client.open("Project Status Form").sheet1  # ודא שזה שם הקובץ שלך ב־Google Sheets
+    sheet = client.open("Project Status Form").sheet1
     return sheet
 
-# תצוגת Streamlit
 st.title("🔁 בדיקת שליחה ל-Google Sheets")
 
 if st.button("שלח שורת בדיקה"):
