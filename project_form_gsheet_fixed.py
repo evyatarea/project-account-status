@@ -13,6 +13,9 @@ def connect_to_sheet():
     client = gspread.authorize(creds)
     sheet = client.open("Project Status Form").sheet1
     return sheet
+    
+st.set_page_config(page_title="טופס סטטוס", layout="centered")
+st.title("📋 טופס סטטוס חודשי למנהלי פרויקטים")
 
 @st.cache_data
 def load_projects():
