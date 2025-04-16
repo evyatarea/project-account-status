@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
+import json
 from google.oauth2.service_account import Credentials
 
 # קביעת שם הגיליון בגוגל שיטס
@@ -10,7 +11,8 @@ GOOGLE_SHEET_NAME = "Project Status Form"
 @st.cache_data
 def connect_to_gsheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_info(st.secrets["GOOGLE_CREDENTIALS"], scopes=scope)
+    service_account_info = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open(GOOGLE_SHEET_NAME).sheet1
     return sheet
