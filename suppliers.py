@@ -1,38 +1,41 @@
 """
-מחירוני ספקים - כל ספק עם המוצרים והמחירים שלו
+מחירוני ספקים - שמירה וטעינה מקובץ JSON
 """
+import json
+import os
 
-SUPPLIERS = {
-    "שמפנה זהל": {
-        "name": "שמפנה זהל",
-        "products": [
-            {"catalog_number": "1001", "description": "שמפניה ברוט קלאסיק 750 מ\"ל", "unit": "בקבוק", "price": 89.90},
-            {"catalog_number": "1002", "description": "שמפניה רוזה 750 מ\"ל", "unit": "בקבוק", "price": 99.90},
-            {"catalog_number": "1003", "description": "שמפניה דמי סק 750 מ\"ל", "unit": "בקבוק", "price": 85.00},
-            {"catalog_number": "1004", "description": "שמפניה ברוט רזרב 750 מ\"ל", "unit": "בקבוק", "price": 120.00},
-            {"catalog_number": "1005", "description": "שמפניה מוסקטו 750 מ\"ל", "unit": "בקבוק", "price": 75.00},
-            {"catalog_number": "1006", "description": "שמפניה ברוט מיני 200 מ\"ל", "unit": "בקבוק", "price": 35.00},
-            {"catalog_number": "1007", "description": "שמפניה רוזה מיני 200 מ\"ל", "unit": "בקבוק", "price": 38.00},
-            {"catalog_number": "1008", "description": "שמפניה ברוט מגנום 1.5 ליטר", "unit": "בקבוק", "price": 180.00},
-            {"catalog_number": "1009", "description": "קאווה ברוט 750 מ\"ל", "unit": "בקבוק", "price": 55.00},
-            {"catalog_number": "1010", "description": "פרוסקו 750 מ\"ל", "unit": "בקבוק", "price": 65.00},
-            {"catalog_number": "1011", "description": "אסטי ספומנטה 750 מ\"ל", "unit": "בקבוק", "price": 70.00},
-            {"catalog_number": "1012", "description": "שמפניה בלאן דה בלאן 750 מ\"ל", "unit": "בקבוק", "price": 150.00},
-        ],
-    }
-}
+SUPPLIERS_FILE = "suppliers_data.json"
+
+
+def _load_suppliers():
+    """טוען את כל הספקים מהקובץ"""
+    if not os.path.exists(SUPPLIERS_FILE):
+        return {}
+    with open(SUPPLIERS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_suppliers(data):
+    """שומר את כל הספקים לקובץ"""
+    with open(SUPPLIERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def get_supplier_names():
     """מחזיר רשימת שמות ספקים"""
-    return list(SUPPLIERS.keys())
+    return list(_load_suppliers().keys())
+
+
+def get_supplier(supplier_name):
+    """מחזיר את כל פרטי הספק"""
+    return _load_suppliers().get(supplier_name)
 
 
 def get_supplier_products(supplier_name):
     """מחזיר את רשימת המוצרים של ספק"""
-    supplier = SUPPLIERS.get(supplier_name)
+    supplier = get_supplier(supplier_name)
     if supplier:
-        return supplier["products"]
+        return supplier.get("products", [])
     return []
 
 
@@ -42,4 +45,27 @@ def search_products(supplier_name, query):
     if not query:
         return products
     query = query.strip()
-    return [p for p in products if query in p["description"] or query in p["catalog_number"]]
+    return [p for p in products if query in p["description"] or query in p.get("catalog_number", "")]
+
+
+def save_supplier(name, contact_name="", phone="", email="", address="", notes="", products=None):
+    """שמירת ספק חדש או עדכון קיים"""
+    data = _load_suppliers()
+    data[name] = {
+        "name": name,
+        "contact_name": contact_name,
+        "phone": phone,
+        "email": email,
+        "address": address,
+        "notes": notes,
+        "products": products or [],
+    }
+    _save_suppliers(data)
+
+
+def delete_supplier(name):
+    """מחיקת ספק"""
+    data = _load_suppliers()
+    if name in data:
+        del data[name]
+        _save_suppliers(data)
