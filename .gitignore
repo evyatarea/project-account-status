@@ -7,3 +7,4 @@ credentials.json
 # לא להעלות תיקיות או קבצים של המערכת
 __pycache__/
 *.pyc
+data/

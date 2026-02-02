@@ -1,13 +1,22 @@
 import streamlit as st
-from accounting_form import show_accounting_form
-from meeting_scheduler import show_meeting_scheduler
 
-st.set_page_config(page_title="ניהול פרויקטים", layout="centered")
+st.set_page_config(page_title="מערכת תעודות משלוח", layout="wide")
 
-tab = st.radio("בחר פעולה:", ["הגשת חשבון", "שיבוץ פגישה"])
+from auth import check_login, logout
+from shipping_document import show_shipping_document
 
-if tab == "הגשת חשבון":
-    show_accounting_form()
+if not check_login():
+    st.stop()
 
-elif tab == "שיבוץ פגישה":
-    show_meeting_scheduler()
+# סרגל עליון
+col_title, col_user, col_logout = st.columns([4, 2, 1])
+with col_title:
+    st.title("מערכת תעודות משלוח")
+with col_user:
+    st.markdown(f"**משתמש:** {st.session_state.get('username', '')}")
+with col_logout:
+    logout()
+
+st.divider()
+
+show_shipping_document()
