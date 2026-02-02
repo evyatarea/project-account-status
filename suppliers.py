@@ -48,15 +48,18 @@ def search_products(supplier_name, query):
     return [p for p in products if query in p["description"] or query in p.get("catalog_number", "")]
 
 
-def save_supplier(name, contact_name="", phone="", email="", address="", notes="", products=None):
+def save_supplier(name, supplier_number="", contact_name="", phone="", email="",
+                   address="", contract="", notes="", products=None):
     """שמירת ספק חדש או עדכון קיים"""
     data = _load_suppliers()
     data[name] = {
         "name": name,
+        "supplier_number": supplier_number,
         "contact_name": contact_name,
         "phone": phone,
         "email": email,
         "address": address,
+        "contract": contract,
         "notes": notes,
         "products": products or [],
     }

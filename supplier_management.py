@@ -48,6 +48,11 @@ def _show_supplier_form(existing_supplier):
             key=f"{prefix}_name",
             disabled=is_edit,
         )
+        supplier_number = st.text_input(
+            "מספר ספק",
+            value=existing_supplier.get("supplier_number", "") if is_edit else "",
+            key=f"{prefix}_supplier_number",
+        )
         contact_name = st.text_input(
             "איש קשר",
             value=existing_supplier.get("contact_name", "") if is_edit else "",
@@ -68,6 +73,11 @@ def _show_supplier_form(existing_supplier):
             "כתובת",
             value=existing_supplier.get("address", "") if is_edit else "",
             key=f"{prefix}_address",
+        )
+        contract = st.text_input(
+            "חוזה מקושר",
+            value=existing_supplier.get("contract", "") if is_edit else "",
+            key=f"{prefix}_contract",
         )
         notes = st.text_input(
             "הערות",
@@ -91,7 +101,7 @@ def _show_supplier_form(existing_supplier):
 
     # הצגת שורות המחירון
     for i, prod in enumerate(st.session_state[state_key]):
-        cols = st.columns([2, 4, 2, 2, 1])
+        cols = st.columns([2, 4, 1.5, 2, 2, 1])
         with cols[0]:
             st.session_state[state_key][i]["catalog_number"] = st.text_input(
                 "מק\"ט", value=prod.get("catalog_number", ""), key=f"{prefix}_cat_{i}"
@@ -102,7 +112,7 @@ def _show_supplier_form(existing_supplier):
             )
         with cols[2]:
             st.session_state[state_key][i]["unit"] = st.text_input(
-                "יחידה", value=prod.get("unit", ""), key=f"{prefix}_unit_{i}"
+                "יח׳", value=prod.get("unit", ""), key=f"{prefix}_unit_{i}"
             )
         with cols[3]:
             st.session_state[state_key][i]["price"] = st.number_input(
@@ -110,6 +120,12 @@ def _show_supplier_form(existing_supplier):
                 key=f"{prefix}_price_{i}"
             )
         with cols[4]:
+            st.session_state[state_key][i]["contract_qty"] = st.number_input(
+                "כמות חוזה", min_value=0.0, step=1.0,
+                value=float(prod.get("contract_qty", 0)),
+                key=f"{prefix}_cqty_{i}"
+            )
+        with cols[5]:
             if len(st.session_state[state_key]) > 1:
                 if st.button("✕", key=f"{prefix}_del_{i}"):
                     st.session_state[state_key].pop(i)
@@ -148,10 +164,12 @@ def _show_supplier_form(existing_supplier):
 
         save_supplier(
             name=name,
+            supplier_number=supplier_number,
             contact_name=contact_name,
             phone=phone,
             email=email,
             address=address,
+            contract=contract,
             notes=notes,
             products=valid_products,
         )
@@ -165,7 +183,7 @@ def _show_supplier_form(existing_supplier):
 
 
 def _empty_product():
-    return {"catalog_number": "", "description": "", "unit": "", "price": 0.0}
+    return {"catalog_number": "", "description": "", "unit": "", "price": 0.0, "contract_qty": 0.0}
 
 
 def _import_pricelist(uploaded_file, state_key):
@@ -188,6 +206,8 @@ def _import_pricelist(uploaded_file, state_key):
                 col_map["unit"] = col
             elif any(k in col_lower for k in ["מחיר", "price"]):
                 col_map["price"] = col
+            elif any(k in col_lower for k in ["כמות חוזה", "contract", "כמות"]):
+                col_map["contract_qty"] = col
 
         products = []
         for _, row in df.iterrows():
@@ -196,6 +216,7 @@ def _import_pricelist(uploaded_file, state_key):
                 "description": str(row.get(col_map.get("description", ""), "")),
                 "unit": str(row.get(col_map.get("unit", ""), "")),
                 "price": float(row.get(col_map.get("price", ""), 0) or 0),
+                "contract_qty": float(row.get(col_map.get("contract_qty", ""), 0) or 0),
             })
 
         if products:
