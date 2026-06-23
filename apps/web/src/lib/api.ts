@@ -40,3 +40,78 @@ export function getCurrentUser(): { id: string; fullName: string; role: string }
   const raw = localStorage.getItem("user");
   return raw ? JSON.parse(raw) : null;
 }
+
+export type ResourceType = "material" | "labor" | "equipment" | "service";
+
+export interface Item {
+  id: string;
+  itemCode: string;
+  description: string;
+  resourceType: ResourceType;
+  unit: string;
+}
+
+export interface Project {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface DailyLog {
+  id: string;
+  projectId: string;
+  logDate: string;
+  siteManagerId: string;
+  status: "open" | "closed";
+}
+
+export interface ResourceRow {
+  id: string;
+  dailyLogId: string;
+  resourceType: ResourceType;
+  itemId: string | null;
+  quantityReported: string;
+  unit: string;
+  deliveryTicketNumber: string | null;
+  paymentStatus: string;
+  createdAt: string;
+}
+
+export const listProjects = () => apiFetch<Project[]>("/projects");
+export const listItems = () => apiFetch<Item[]>("/items");
+export const listDailyLogs = (params: { projectId?: string } = {}) => {
+  const qs = params.projectId ? `?projectId=${params.projectId}` : "";
+  return apiFetch<DailyLog[]>(`/daily-logs${qs}`);
+};
+export const listResourceRows = (dailyLogId: string) =>
+  apiFetch<ResourceRow[]>(`/resource-rows?dailyLogId=${dailyLogId}`);
+
+export const createResourceRow = (input: {
+  dailyLogId: string;
+  resourceType: ResourceType;
+  itemId?: string;
+  quantityReported: number;
+  unit: string;
+  deliveryTicketNumber?: string;
+}) => apiFetch<ResourceRow>("/resource-rows", { method: "POST", body: JSON.stringify(input) });
+
+export const createProject = (input: { code: string; name: string }) =>
+  apiFetch<Project>("/projects", { method: "POST", body: JSON.stringify(input) });
+
+export const createUser = (input: {
+  fullName: string;
+  email: string;
+  password: string;
+  role: "admin" | "engineer" | "site_manager";
+}) => apiFetch("/users", { method: "POST", body: JSON.stringify(input) });
+
+export const listUsers = (role?: string) =>
+  apiFetch<{ id: string; fullName: string; email: string; role: string }[]>(
+    `/users${role ? `?role=${role}` : ""}`,
+  );
+
+export const assignUserToProject = (projectId: string, userId: string) =>
+  apiFetch(`/projects/${projectId}/assignments`, { method: "POST", body: JSON.stringify({ userId }) });
+
+export const openDailyLog = (input: { projectId: string; logDate: string; siteManagerId: string }) =>
+  apiFetch<DailyLog>("/daily-logs", { method: "POST", body: JSON.stringify(input) });

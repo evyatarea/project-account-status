@@ -5,6 +5,7 @@ import { projectsRouter } from "./routes/projects.routes.js";
 import { dailyLogsRouter } from "./routes/dailyLogs.routes.js";
 import { resourceRowsRouter } from "./routes/resourceRows.routes.js";
 import { itemsRouter } from "./routes/items.routes.js";
+import { usersRouter } from "./routes/users.routes.js";
 
 export const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/auth", authRouter);
+app.use("/users", usersRouter);
 app.use("/projects", projectsRouter);
 app.use("/daily-logs", dailyLogsRouter);
 app.use("/resource-rows", resourceRowsRouter);
