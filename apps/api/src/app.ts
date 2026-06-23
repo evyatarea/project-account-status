@@ -6,6 +6,9 @@ import { dailyLogsRouter } from "./routes/dailyLogs.routes.js";
 import { resourceRowsRouter } from "./routes/resourceRows.routes.js";
 import { itemsRouter } from "./routes/items.routes.js";
 import { usersRouter } from "./routes/users.routes.js";
+import { companiesRouter } from "./routes/companies.routes.js";
+import { contractRulesRouter } from "./routes/contractRules.routes.js";
+import { attendanceRouter } from "./routes/attendance.routes.js";
 
 export const app = express();
 
@@ -20,6 +23,9 @@ app.use("/projects", projectsRouter);
 app.use("/daily-logs", dailyLogsRouter);
 app.use("/resource-rows", resourceRowsRouter);
 app.use("/items", itemsRouter);
+app.use("/companies", companiesRouter);
+app.use("/contract-rules", contractRulesRouter);
+app.use("/attendance", attendanceRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

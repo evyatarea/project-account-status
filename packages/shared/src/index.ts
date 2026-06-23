@@ -44,3 +44,37 @@ export const PAYMENT_STATUS_TRANSITIONS: Record<PaymentStatus, PaymentStatus[]> 
 export function canTransition(from: PaymentStatus, to: PaymentStatus): boolean {
   return PAYMENT_STATUS_TRANSITIONS[from].includes(to);
 }
+
+export interface LunchDeductionConfig {
+  ruleType: "lunch_deduction";
+  afterHours: number;
+  deductMinutes: number;
+}
+
+export interface DailyCapConfig {
+  ruleType: "daily_cap";
+  maxHours: number;
+}
+
+export interface RoundingEarlyStartConfig {
+  ruleType: "rounding_early_start";
+  shiftStart: string; // "HH:mm"
+}
+
+export interface FixedDailyRateConfig {
+  ruleType: "fixed_daily_rate";
+  minHoursForFullDay: number;
+  fullDayHours: number;
+}
+
+export interface FridayFullDayConfig {
+  ruleType: "friday_full_day";
+  fullDayHours: number;
+}
+
+export type RuleConfig =
+  | LunchDeductionConfig
+  | DailyCapConfig
+  | RoundingEarlyStartConfig
+  | FixedDailyRateConfig
+  | FridayFullDayConfig;
