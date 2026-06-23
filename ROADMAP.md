@@ -34,6 +34,26 @@ This is the highest-risk component; build it as a pure, testable function, indep
 - Admin UI: rule builder (form, not raw JSON) that serializes to `contract_rules.rule_config jsonb`.
 - Nightly/on-demand job: ingest raw biometric punches → `attendance_raw` → run engine → write/refresh `resource_rows` (labor type) with calculated hours + amount, status `Draft`.
 
+## Phase 2.5 — Claude-Assisted Log Creation & Page Ingestion (Weeks 4–5)
+Two distinct, narrow integrations with the Claude API — Claude proposes structured data, it never writes to the DB directly and never grants itself permissions beyond the calling user's role.
+
+**A. Opening a new daily log ("creating a new notebook") — engineer/admin only.**
+- Engineer/admin gives a free-text instruction (e.g. "פתח יומן להיום בפרויקט X למנהל העבודה יוסי").
+- Backend calls Claude with a forced tool-call (strict JSON schema: `project_code|id`, `log_date`, `site_manager_id|name`, `weather`, `notes`) — never free text into the DB.
+- Backend resolves names → ids, validates the caller is engineer/admin AND the named site manager is actually assigned to that project (`project_assignments`) before insert.
+- Row is written to `daily_logs` with `creation_source = 'ai_assisted'` and the original instruction kept in `ai_instruction` for audit.
+- This endpoint is just an alternate input path to the exact same "open log" logic the manual form uses — same validation, same RBAC, same result row.
+
+**B. Ingesting a "page" into an existing open log — site manager only.**
+- Site manager submits one "page": a photo of a paper delivery ticket, or a typed/dictated free-text description of the day (e.g. "הגיע 10 קוב חול, תעודה 4521, עבדו 3 פועלים מחברת דני 8 שעות").
+- Stored first as a `log_pages` row (`input_type`, `raw_text`/`raw_image_url`, status `pending`) scoped to a daily_log that must be `open` and assigned to that site manager — identical guard to manual row entry.
+- Backend calls Claude (vision-capable for images) with a forced tool-call returning an **array** of row candidates: `{resource_type, item_code_or_description, quantity, unit, delivery_ticket_number, company_name}[]` — one page can and often does fan out into several rows, mirroring a real paper log page.
+- Backend resolves `item_code_or_description`/`company_name` against `items`/`companies` (exact code match first, fuzzy fallback flagged for engineer review), then inserts one `resource_rows` per array entry: `payment_status = 'draft'`, `creation_source = 'ai_extracted'`, `source_page_id` pointing back at the page.
+- `log_pages.ai_raw_response` keeps Claude's full structured output and `log_pages.status` moves `pending → parsed | failed`, so every AI-derived financial row is traceable back to its exact source input.
+- Nothing AI-extracted skips the existing approval pipeline — rows still need engineer sign-off (Draft → Submitted → Approved → Paid) exactly like manually-typed rows.
+
+Schema support for this: `log_creation_source`/`row_creation_source` enums, `daily_logs.creation_source`/`ai_instruction`, and the `log_pages` table (with `resource_rows.source_page_id`) — see `database/schema.sql`.
+
 ## Phase 3 — Site Manager Mobile UI (Weeks 4–5)
 - Mobile-first, large tap targets, high contrast, minimal typing.
 - Flow: pick today's open log (pre-filtered to assigned projects) → tap resource type → pick item from searchable dropdown → enter quantity + ticket number → save row. No log/project creation capability anywhere in this UI.

@@ -18,6 +18,10 @@ CREATE TYPE rule_type AS ENUM (
     'fixed_daily_rate',
     'friday_full_day'
 );
+CREATE TYPE log_creation_source AS ENUM ('manual', 'ai_assisted');
+CREATE TYPE row_creation_source AS ENUM ('manual', 'ai_extracted');
+CREATE TYPE log_page_input_type AS ENUM ('text', 'image', 'voice');
+CREATE TYPE log_page_status AS ENUM ('pending', 'parsed', 'failed', 'reviewed');
 
 -- -----------------------------------------------------------------------------
 -- updated_at trigger helper
@@ -140,6 +144,8 @@ CREATE TABLE daily_logs (
     status          daily_log_status NOT NULL DEFAULT 'open',
     weather         TEXT,
     notes           TEXT,
+    creation_source log_creation_source NOT NULL DEFAULT 'manual',
+    ai_instruction  TEXT,                                    -- the free-text instruction Claude used to open this log, if any
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (project_id, log_date, site_manager_id)
@@ -148,6 +154,32 @@ CREATE TRIGGER trg_daily_logs_updated_at BEFORE UPDATE ON daily_logs
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE INDEX idx_daily_logs_project_date ON daily_logs(project_id, log_date);
 CREATE INDEX idx_daily_logs_site_manager ON daily_logs(site_manager_id, status);
+
+-- -----------------------------------------------------------------------------
+-- Log Pages — a single piece of raw input submitted into an OPEN daily_log
+-- (a photo of a paper ticket, a dictated/typed free-text description, etc.),
+-- mirroring how one page of a paper logbook lists several items at once.
+-- One page fans out into many resource_rows after Claude parses it.
+-- raw_text/raw_image_url hold the original input; ai_raw_response keeps
+-- Claude's full structured output for audit, since this feeds financial data.
+-- -----------------------------------------------------------------------------
+CREATE TABLE log_pages (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    daily_log_id    UUID NOT NULL REFERENCES daily_logs(id) ON DELETE CASCADE,
+    submitted_by    UUID NOT NULL REFERENCES users(id),       -- site manager who submitted the page
+    input_type      log_page_input_type NOT NULL,
+    raw_text        TEXT,
+    raw_image_url   TEXT,
+    ai_model        TEXT,                                     -- Claude model id used to parse this page
+    ai_raw_response JSONB,                                    -- full structured response, for audit/debugging
+    status          log_page_status NOT NULL DEFAULT 'pending',
+    error_message   TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TRIGGER trg_log_pages_updated_at BEFORE UPDATE ON log_pages
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE INDEX idx_log_pages_daily_log ON log_pages(daily_log_id);
 
 -- -----------------------------------------------------------------------------
 -- Resource Rows — the atomic unit of the whole system.
@@ -170,6 +202,8 @@ CREATE TABLE resource_rows (
     calculated_amount       NUMERIC(14,2),                               -- quantity/hours * price, post-rules
     external_ref            TEXT,                                       -- Priority GRV/doc reference (Phase 2)
     payment_status          payment_status NOT NULL DEFAULT 'draft',
+    creation_source         row_creation_source NOT NULL DEFAULT 'manual',
+    source_page_id          UUID REFERENCES log_pages(id),               -- the log_page this row was extracted from, if AI-extracted
     notes                   TEXT,
     approved_by             UUID REFERENCES users(id),
     approved_at             TIMESTAMPTZ,
@@ -182,6 +216,7 @@ CREATE INDEX idx_resource_rows_log ON resource_rows(daily_log_id);
 CREATE INDEX idx_resource_rows_project_status ON resource_rows(project_id, payment_status);
 CREATE INDEX idx_resource_rows_company ON resource_rows(company_id) WHERE company_id IS NOT NULL;
 CREATE INDEX idx_resource_rows_ticket ON resource_rows(delivery_ticket_number) WHERE delivery_ticket_number IS NOT NULL;
+CREATE INDEX idx_resource_rows_source_page ON resource_rows(source_page_id) WHERE source_page_id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
 -- Raw biometric attendance punches (input to the rules engine).
