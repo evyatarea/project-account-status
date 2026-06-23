@@ -7,3 +7,14 @@ credentials.json
 # לא להעלות תיקיות או קבצים של המערכת
 __pycache__/
 *.pyc
+
+# Node / monorepo
+node_modules/
+dist/
+apps/*/dist/
+packages/*/dist/
+.env
+.env.local
+apps/*/.env
+apps/*/.env.local
+*.tsbuildinfo
